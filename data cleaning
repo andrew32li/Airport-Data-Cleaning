@@ -1,0 +1,49 @@
+import pandas as pd
+import numpy as np
+
+def airport_data(data):
+
+# Separated given data with delimiter '\n' to sort data into rows. Then iterated through the data and separated by the delimiter ';'
+# to sort the data into dataframe values. 
+    rows = data.split("\n")
+    data_values = []
+    for value in rows:
+        data_values.append(value.split(";"))
+
+# Created a dataframe and set the column names to the values in the first row. Changed the column type of the Flight Codes 
+# column from float to integer. Then filled in the missing numbers in the Flight Codes column such that the codes increase
+# by 10 with each row. Lastly, removed the last row that was empty.
+    df = pd.DataFrame(data_values)
+    df.drop(0, inplace = True)
+    df.columns = data_values[0]
+    df['FlightCodes'] = pd.to_numeric(df['FlightCodes'], errors='coerce').astype('Int64')
+    df['FlightCodes'] = df['FlightCodes'].fillna(df['FlightCodes'].shift() + 10)
+    df.drop(len(df), inplace=True)
+    
+# Iterated through the rows in the To_From column to convert the column to capital case. Iterated through 
+# the values in the To From column and separated by '_'. Created a dataframe with the array and concatenated the new 
+# dataframe with the previous dataframe. Lastly, removed the old To_From column.
+    for i in range(1,len(df) + 1):
+        df.at[i,'To_From'] = df.at[i,'To_From'].upper()
+    tofrom = []
+    for values in df['To_From']:
+        tofrom.append(values.split("_"))
+    df2 = pd.DataFrame(tofrom)
+    df2.columns = df.columns[len(df.columns) - 1].split('_')
+    df2.index = df2.index + 1
+    df3 = pd.concat([df, df2], join='inner',axis=1)
+    df3.drop('To_From', axis = 1, inplace = True)
+
+# Cleaned the Airline Code column to remove the excess characters and appended the new array to the dataframe. 
+    airlinecode = []
+    for airlines in df3['Airline Code']:
+        airline_string = ""
+        for chars in airlines:
+            if (chars.isalpha() or chars == ' '):
+                airline_string += chars
+        airlinecode.append(airline_string)
+    airlinecode
+    df3['Airline Code'] = airlinecode
+    return df3
+
+airport_data('Airline Code;DelayTimes;FlightCodes;To_From\nAir Canada (!);[21, 40];20015.0;WAterLoo_NEWYork\n<Air France> (12);[];;Montreal_TORONTO\n(Porter Airways. );[60, 22, 87];20035.0;CALgary_Ottawa\n12. Air France;[78, 66];;Ottawa_VANcouvER\n""".\\.Lufthansa.\\.""";[12, 33];20055.0;london_MONTreal\n')
